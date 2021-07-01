@@ -396,48 +396,49 @@ def post_to_notehub():
     """Post all sensor data to Notehub.io"""
     while True:
         time.sleep(NOTECARD_TIME_BETWEEN_POSTS)
-        notecard_port = Serial("/dev/ttyACM0", 9600)
         try:
+            notecard_port = Serial('/dev/ttyACM0', 9600)
             card = notecard.OpenSerial(notecard_port)
-        except Exception as exception:
-            raise Exception("Error opening notecard: {}".format(exception))
-        # Setup data
-        sensor_data = collect_all_data()
-        for sensor_data_key in sensor_data:
-            data_unit = None
-            if 'temperature' in sensor_data_key:
-                data_unit = '°C'
-            elif 'humidity' in sensor_data_key:
-                data_unit = '%RH'
-            elif 'pressure' in sensor_data_key:
-                data_unit = 'hPa'
-            elif 'oxidising' in sensor_data_key or 'reducing' in sensor_data_key or 'nh3' in sensor_data_key:
-                data_unit = 'kOhms'
-            elif 'proximity' in sensor_data_key:
-                pass
-            elif 'lux' in sensor_data_key:
-                data_unit = 'Lux'
-            elif 'pm' in sensor_data_key:
-                data_unit = 'ug/m3'
-            elif 'battery_voltage' in sensor_data_key:
-                data_unit = 'V'
-            elif 'battery_percentage' in sensor_data_key:
-                data_unit = '%'
-            request = {'req':'note.add','body':{sensor_data_key:sensor_data[sensor_data_key], 'units':data_unit}}
+            # Setup data
+            sensor_data = collect_all_data()
+            for sensor_data_key in sensor_data:
+                data_unit = None
+                if 'temperature' in sensor_data_key:
+                    data_unit = '°C'
+                elif 'humidity' in sensor_data_key:
+                    data_unit = '%RH'
+                elif 'pressure' in sensor_data_key:
+                    data_unit = 'hPa'
+                elif 'oxidising' in sensor_data_key or 'reducing' in sensor_data_key or 'nh3' in sensor_data_key:
+                    data_unit = 'kOhms'
+                elif 'proximity' in sensor_data_key:
+                    pass
+                elif 'lux' in sensor_data_key:
+                    data_unit = 'Lux'
+                elif 'pm' in sensor_data_key:
+                    data_unit = 'ug/m3'
+                elif 'battery_voltage' in sensor_data_key:
+                    data_unit = 'V'
+                elif 'battery_percentage' in sensor_data_key:
+                    data_unit = '%'
+                request = {'req':'note.add','body':{sensor_data_key:sensor_data[sensor_data_key], 'units':data_unit}}
+                try:
+                    response = card.Transaction(request)
+                    if DEBUG:
+                        logging.info('Notecard response: {}'.format(response))
+                except Exception as exception:
+                    logging.warning('Notecard data setup error: {}'.format(exception))
+            # Sync data with Notehub
+            request = {'req':'service.sync'}
             try:
                 response = card.Transaction(request)
                 if DEBUG:
                     logging.info('Notecard response: {}'.format(response))
             except Exception as exception:
-                logging.warning('Notecard data setup error: {}'.format(exception))
-        # Sync data with Notehub
-        request = {'req':'service.sync'}
-        try:
-            response = card.Transaction(request)
-            if DEBUG:
-                logging.info('Notecard response: {}'.format(response))
+                logging.warning('Notecard sync error: {}'.format(exception))
         except Exception as exception:
-            logging.warning('Notecard sync error: {}'.format(exception))
+            # TODO: Do we need to reboot here? Or is this missing tty temporary?
+            logging.warning('Error opening notecard: {}'.format(exception))
 
 def get_serial_number():
     """Get Raspberry Pi serial number to use as LUFTDATEN_SENSOR_UID"""
@@ -459,7 +460,6 @@ if __name__ == '__main__':
     parser.add_argument("-b", "--bind", metavar='ADDRESS', default='0.0.0.0', help="Specify alternate bind address [default: 0.0.0.0]")
     parser.add_argument("-p", "--port", metavar='PORT', default=8000, type=int, help="Specify alternate port [default: 8000]")
     parser.add_argument("-e", "--enviro", metavar='ENVIRO', type=str_to_bool, default='false', help="Device is an Enviro (not Enviro+) so don't fetch data from particulate sensor as it doesn't exist [default: false]")
-    parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool, help="Turns on more verbose logging, showing sensor output and post responses [default: false]")
     parser.add_argument("-t", "--temp", metavar='TEMPERATURE', type=float, help="The temperature compensation value to get better temperature results when the Enviro+ pHAT is too close to the Raspberry Pi board")
     parser.add_argument("-u", "--humid", metavar='HUMIDITY', type=float, help="The humidity compensation value to get better humidity results when the Enviro+ pHAT is too close to the Raspberry Pi board")
     parser.add_argument("-d", "--debug", metavar='DEBUG', type=str_to_bool, help="Turns on more vebose logging, showing sensor output and post responses [default: false]")
@@ -514,14 +514,12 @@ if __name__ == '__main__':
 
     while True:
         get_temperature(args.temp)
+        get_humidity(args.humid)
         get_pressure()
-        get_humidity()
         get_light()
         get_gas()
         if not args.enviro:
             get_particulates()
-        get_humidity(args.humid)
-        get_light()
         get_cpu_temperature()
         get_battery()
         if DEBUG:
