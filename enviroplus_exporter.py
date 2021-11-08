@@ -22,7 +22,7 @@ from pms5003 import PMS5003
 from pms5003 import ReadTimeoutError as pmsReadTimeoutError
 from pms5003 import SerialTimeoutError as pmsSerialTimeoutError
 from pms5003 import ChecksumMismatchError as pmsChecksumMismatchError
-from adafruit_lc709203f import LC709023F, PackSize
+from adafruit_lc709203f import LC709203F, PackSize
 
 try:
     from smbus2 import SMBus
@@ -52,7 +52,7 @@ DEBUG = os.getenv('DEBUG', 'false') == 'true'
 bus = SMBus(1)
 bme280 = BME280(i2c_dev=bus)
 pms5003 = PMS5003()
-sensor = LC709023F(board.I2C())
+sensor = LC709203F(board.I2C())
 
 TEMPERATURE = Gauge('temperature','Temperature measured (*C)')
 PRESSURE = Gauge('pressure','Pressure measured (hPa)')
@@ -115,9 +115,9 @@ else:
 # Setup Blues Notecard
 NOTECARD_TIME_BETWEEN_POSTS = int(os.getenv('NOTECARD_TIME_BETWEEN_POSTS', '600'))
 
-# Setup LC709023F battery monitor
+# Setup LC709203F battery monitor
 if DEBUG:
-    logging.info('## LC709023F battery monitor ##')
+    logging.info('## LC709203F battery monitor ##')
 try:
     if DEBUG:
         logging.info("Sensor IC version: {}".format(hex(sensor.ic_version)))
