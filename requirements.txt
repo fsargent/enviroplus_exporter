@@ -8,3 +8,4 @@ requests>=2.24.0
 adafruit-blinka
 SafecastPy
 adafruit-circuitpython-lc709203f
+python-periphery
