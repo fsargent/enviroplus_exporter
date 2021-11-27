@@ -13,7 +13,7 @@ from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from prometheus_client import start_http_server, Gauge, Histogram
 import SafecastPy
-import notecard.notecard.notecard as notecard
+import notecard.notecard as notecard
 from periphery import Serial
 
 from bme280 import BME280
@@ -52,7 +52,13 @@ DEBUG = os.getenv('DEBUG', 'false') == 'true'
 bus = SMBus(1)
 bme280 = BME280(i2c_dev=bus)
 pms5003 = PMS5003()
-sensor = LC709203F(board.I2C())
+
+battery_sensor = False
+try:
+    sensor = LC709203F(board.I2C())
+    battery_sensor = True
+except ValueError:
+    pass
 
 TEMPERATURE = Gauge('temperature','Temperature measured (*C)')
 PRESSURE = Gauge('pressure','Pressure measured (hPa)')
@@ -116,19 +122,20 @@ else:
 NOTECARD_TIME_BETWEEN_POSTS = int(os.getenv('NOTECARD_TIME_BETWEEN_POSTS', '600'))
 
 # Setup LC709203F battery monitor
-if DEBUG:
-    logging.info('## LC709203F battery monitor ##')
-try:
+if battery_sensor:
     if DEBUG:
-        logging.info("Sensor IC version: {}".format(hex(sensor.ic_version)))
-    # Set the battery pack size to 3000 mAh
-    sensor.pack_size = PackSize.MAH3000
-    sensor.init_RSOC()
-    if DEBUG:
-        logging.info("Battery size: {}".format(PackSize.string[sensor.pack_sizes]))
-except RuntimeError as exception:
-    logging.error("Failed to read sensor with error: {}".format(exception))
-    logging.info("Try setting the I2C clock speed to 10000Hz")
+        logging.info('## LC709203F battery monitor ##')
+    try:
+        if DEBUG:
+            logging.info("Sensor IC version: {}".format(hex(sensor.ic_version)))
+        # Set the battery pack size to 3000 mAh
+        sensor.pack_size = PackSize.MAH3000
+        sensor.init_RSOC()
+        if DEBUG:
+            logging.info("Battery size: {}".format(PackSize.string[sensor.pack_sizes]))
+    except RuntimeError as exception:
+        logging.error("Failed to read sensor with error: {}".format(exception))
+        logging.info("Try setting the I2C clock speed to 10000Hz")
 
 def get_cpu_temperature():
     """Get the temperature from the Raspberry Pi CPU"""
@@ -522,6 +529,7 @@ if __name__ == '__main__':
         if not args.enviro:
             get_particulates()
         get_cpu_temperature()
-        get_battery()
+        if battery_sensor:
+            get_battery()
         if DEBUG:
             logging.info('Sensor data: {}'.format(collect_all_data()))
