@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+prometheus-client = ">=0.7.1"
+influxdb-client = ">=1.8.0"
+pimoroni-bme280 = ">=0.0.2"
+enviroplus = ">=0.0.3"
+"rpi.gpio" = ">=0.7.0"
+smbus = ">=1.1.post2"
+requests = ">=2.24.0"
+adafruit-blinka = "*"
+safecastpy = "*"
+adafruit-circuitpython-lc709203f = "*"
+python-periphery = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
