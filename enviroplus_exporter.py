@@ -345,14 +345,14 @@ if battery_sensor:
         logging.info("## LC709203F battery monitor ##")
     try:
         if DEBUG:
-            logging.info("Sensor IC version: {}".format(hex(sensor.ic_version)))
+            logging.info(f"Sensor IC version: {hex(sensor.ic_version)}")
         # Set the battery pack size to 3000 mAh
         sensor.pack_size = PackSize.MAH3000
         sensor.init_RSOC()
         if DEBUG:
-            logging.info("Battery size: {}".format(PackSize.string[sensor.pack_sizes]))
+            logging.info(f"Battery size: {PackSize.string[sensor.pack_sizes]}")
     except RuntimeError as exception:
-        logging.error("Failed to read sensor with error: {}".format(exception))
+        logging.error(f"Failed to read sensor with error: {exception}")
         logging.info("Try setting the I2C clock speed to 10000Hz")
 
 
@@ -399,7 +399,7 @@ def get_gas():
     try:
         readings = gas.read_all()
     except (OSError, ValueError) as exception:
-        logging.warning("Failed to read gas sensor with error: {}".format(exception))
+        logging.warning(f"Failed to read gas sensor with error: {exception}")
     else:
         OXIDISING.set(readings.oxidising)
         OXIDISING_HIST.observe(readings.oxidising)
@@ -417,7 +417,7 @@ def get_light():
         lux = ltr559.get_lux()
         prox = ltr559.get_proximity()
     except OSError as exception:
-        logging.warning("Failed to read light sensor with error: {}".format(exception))
+        logging.warning(f"Failed to read light sensor with error: {exception}")
     else:
         LUX.set(lux)
         PROXIMITY.set(prox)
@@ -458,20 +458,15 @@ def get_battery():
         BATTERY_PERCENTAGE.set(percentage_reading)
         if DEBUG:
             logging.info(
-                "Battery: {} Volts / {} %".format(
-                    sensor.cell_voltage, sensor.cell_percent
-                )
+                f"Battery: {sensor.cell_voltage} Volts / {sensor.cell_percent} %"
             )
     except (RuntimeError, OSError) as exception:
-        logging.warning(
-            "Failed to read battery monitor with error: {}".format(exception)
-        )
+        logging.warning(f"Failed to read battery monitor with error: {exception}")
 
 
 def collect_all_data():
     """Collects all the data currently set."""
-    sensor_data = {}
-    sensor_data["temperature"] = TEMPERATURE.collect()[0].samples[0].value
+    sensor_data = {"temperature": TEMPERATURE.collect()[0].samples[0].value}
     sensor_data["humidity"] = HUMIDITY.collect()[0].samples[0].value
     sensor_data["pressure"] = PRESSURE.collect()[0].samples[0].value
     sensor_data["oxidising"] = OXIDISING.collect()[0].samples[0].value
@@ -493,36 +488,36 @@ def post_to_influxdb():
     """Post all sensor data to InfluxDB."""
     while True:
         time.sleep(INFLUXDB_TIME_BETWEEN_POSTS)
-        data_points = []
         round(time.time())
         sensor_data = collect_all_data()
-        for field_name in sensor_data:
-            data_points.append(
-                Point("enviroplus")
-                .tag("location", INFLUXDB_SENSOR_LOCATION)
-                .field(field_name, sensor_data[field_name])
-            )
+        data_points = [
+            Point("enviroplus")
+            .tag("location", INFLUXDB_SENSOR_LOCATION)
+            .field(field_name, sensor_data[field_name])
+            for field_name in sensor_data
+        ]
         try:
             influxdb_api.write(bucket=INFLUXDB_BUCKET, record=data_points)
             if DEBUG:
                 logging.info("InfluxDB response: OK")
         except Exception as exception:
-            logging.warning("Exception sending to InfluxDB: {}".format(exception))
+            logging.warning(f"Exception sending to InfluxDB: {exception}")
 
 
 def post_to_luftdaten():
     """Post relevant sensor data to luftdaten.info."""
     """Code from: https://github.com/sepulworld/balena-environ-plus"""
-    LUFTDATEN_SENSOR_UID = "raspi-" + get_serial_number()
+    LUFTDATEN_SENSOR_UID = f"raspi-{get_serial_number()}"
     while True:
         time.sleep(LUFTDATEN_TIME_BETWEEN_POSTS)
         sensor_data = collect_all_data()
-        values = {}
-        values["P2"] = sensor_data["pm25"]
-        values["P1"] = sensor_data["pm10"]
-        values["temperature"] = "{:.2f}".format(sensor_data["temperature"])
-        values["pressure"] = "{:.2f}".format(sensor_data["pressure"] * 100)
-        values["humidity"] = "{:.2f}".format(sensor_data["humidity"])
+        values = {
+            "P2": sensor_data["pm25"],
+            "P1": sensor_data["pm10"],
+            "temperature": "{:.2f}".format(sensor_data["temperature"]),
+            "pressure": "{:.2f}".format(sensor_data["pressure"] * 100),
+            "humidity": "{:.2f}".format(sensor_data["humidity"]),
+        }
         pm_values = dict(i for i in values.items() if i[0].startswith("P"))
         temperature_values = dict(i for i in values.items() if not i[0].startswith("P"))
         try:
@@ -566,7 +561,7 @@ def post_to_luftdaten():
             else:
                 logging.warning("Luftdaten response: Failed")
         except Exception as exception:
-            logging.warning("Exception sending to Luftdaten: {}".format(exception))
+            logging.warning(f"Exception sending to Luftdaten: {exception}")
 
 
 def post_to_safecast():
@@ -589,7 +584,7 @@ def post_to_safecast():
             )
             if DEBUG:
                 logging.info(
-                    "Safecast PM1 measurement created, id: {}".format(measurement["id"])
+                    f'Safecast PM1 measurement created, id: {measurement["id"]}'
                 )
 
             measurement = safecast.add_measurement(
@@ -606,9 +601,7 @@ def post_to_safecast():
             )
             if DEBUG:
                 logging.info(
-                    "Safecast PM2.5 measurement created, id: {}".format(
-                        measurement["id"]
-                    )
+                    f'Safecast PM2.5 measurement created, id: {measurement["id"]}'
                 )
 
             measurement = safecast.add_measurement(
@@ -625,9 +618,7 @@ def post_to_safecast():
             )
             if DEBUG:
                 logging.info(
-                    "Safecast PM10 measurement created, id: {}".format(
-                        measurement["id"]
-                    )
+                    f'Safecast PM10 measurement created, id: {measurement["id"]}'
                 )
 
             measurement = safecast.add_measurement(
@@ -644,9 +635,7 @@ def post_to_safecast():
             )
             if DEBUG:
                 logging.info(
-                    "Safecast Temperature measurement created, id: {}".format(
-                        measurement["id"]
-                    )
+                    f'Safecast Temperature measurement created, id: {measurement["id"]}'
                 )
 
             measurement = safecast.add_measurement(
@@ -663,9 +652,7 @@ def post_to_safecast():
             )
             if DEBUG:
                 logging.info(
-                    "Safecast Humidity measurement created, id: {}".format(
-                        measurement["id"]
-                    )
+                    f'Safecast Humidity measurement created, id: {measurement["id"]}'
                 )
 
             measurement = safecast.add_measurement(
@@ -682,12 +669,10 @@ def post_to_safecast():
             )
             if DEBUG:
                 logging.info(
-                    "Safecast CPU temperature measurement created, id: {}".format(
-                        measurement["id"]
-                    )
+                    f'Safecast CPU temperature measurement created, id: {measurement["id"]}'
                 )
         except Exception as exception:
-            logging.warning("Exception sending to Safecast: {}".format(exception))
+            logging.warning(f"Exception sending to Safecast: {exception}")
 
 
 def post_to_notehub():
@@ -733,27 +718,27 @@ def post_to_notehub():
                 try:
                     response = card.Transaction(request)
                     if DEBUG:
-                        logging.info("Notecard response: {}".format(response))
+                        logging.info(f"Notecard response: {response}")
                 except Exception as exception:
-                    logging.warning("Notecard data setup error: {}".format(exception))
+                    logging.warning(f"Notecard data setup error: {exception}")
             # Sync data with Notehub
             request = {"req": "service.sync"}
             try:
                 response = card.Transaction(request)
                 if DEBUG:
-                    logging.info("Notecard response: {}".format(response))
+                    logging.info(f"Notecard response: {response}")
             except Exception as exception:
-                logging.warning("Notecard sync error: {}".format(exception))
+                logging.warning(f"Notecard sync error: {exception}")
         except Exception as exception:
             # TODO: Do we need to reboot here? Or is this missing tty temporary?
-            logging.warning("Error opening notecard: {}".format(exception))
+            logging.warning(f"Error opening notecard: {exception}")
 
 
 def get_serial_number():
     """Get Raspberry Pi serial number to use as LUFTDATEN_SENSOR_UID."""
     with open("/proc/cpuinfo", "r") as f:
         for line in f:
-            if line[0:6] == "Serial":
+            if line[:6] == "Serial":
                 return str(line.split(":")[1].strip())
 
 
@@ -762,7 +747,7 @@ def str_to_bool(value):
         return False
     elif value.lower() in {"true", "t", "1", "yes", "y"}:
         return True
-    raise ValueError("{} is not a valid boolean value".format(value))
+    raise ValueError(f"{value} is not a valid boolean value")
 
 
 def calculate_y_pos(x, centre):
@@ -1030,10 +1015,7 @@ def describeAQI(aqi):
         return "Bad"
     if 201 <= aqi <= 300:
         return "Very Bad"
-    if aqi > 300:
-        return "XXX"
-    else:
-        return "?"
+    return "XXX" if aqi > 300 else "?"
 
 
 def get_external_AQI() -> int:
@@ -1193,16 +1175,12 @@ if __name__ == "__main__":
 
     if args.temp:
         logging.info(
-            "Using temperature compensation, reducing the output value by {}° to account for heat leakage from Raspberry Pi board".format(
-                args.temp
-            )
+            f"Using temperature compensation, reducing the output value by {args.temp}° to account for heat leakage from Raspberry Pi board"
         )
 
     if args.humid:
         logging.info(
-            "Using humidity compensation, increasing the output value by {}% to account for heat leakage from Raspberry Pi board".format(
-                args.humid
-            )
+            f"Using humidity compensation, increasing the output value by {args.humid}% to account for heat leakage from Raspberry Pi board"
         )
 
     if args.influxdb:
