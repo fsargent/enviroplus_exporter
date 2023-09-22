@@ -998,7 +998,7 @@ def describe_light(light):
         return "bright"
 
 
-def describeAQI(aqi):
+def describeAQI(aqi: int) -> str:
     # Calculate the Air Quality using the EPA's forumla
     # https://www.epa.vic.gov.au/for-community/monitoring-your-environment/about-epa-airwatch/calculate-air-quality-categories
     # HomeKit	1		2		3		4		5
@@ -1316,11 +1316,13 @@ if __name__ == "__main__":
         humidity_icon = Image.open(f"{path}/icons/humidity-{humidity_desc.lower()}.png")
         img.paste(humidity_icon, (margin, 48), mask=humidity_icon)
 
-        myaqi = aqi.to_aqi(
-            [
-                (aqi.POLLUTANT_PM25, PM25.collect()[0].samples[0].value),
-                (aqi.POLLUTANT_PM10, PM10.collect()[0].samples[0].value),
-            ]
+        myaqi: int = int(
+            aqi.to_aqi(
+                [
+                    (aqi.POLLUTANT_PM25, PM25.collect()[0].samples[0].value),
+                    (aqi.POLLUTANT_PM10, PM10.collect()[0].samples[0].value),
+                ]
+            )
         )
 
         aqi_string = f"AQI In{int(myaqi):,}"
