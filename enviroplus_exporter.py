@@ -1385,26 +1385,26 @@ if __name__ == "__main__":
 
         # Pressure
 
-        t = time.time()
-        mean_pressure, change_per_hour, trend = analyse_pressure(
-            PRESSURE.collect()[0].samples[0].value, t
-        )
-        pressure_string = f"{int(mean_pressure):,} {trend}"
-        img = overlay_text(
-            img, (WIDTH - margin, 48), pressure_string, font_lg, align_right=True
-        )
-        pressure_desc = describe_pressure(mean_pressure).upper()
-        spacing = font_lg.getsize(pressure_string.replace(",", ""))[1] + 1
-        img = overlay_text(
-            img,
-            (WIDTH - margin - 1, 48 + spacing),
-            pressure_desc,
-            font_sm,
-            align_right=True,
-            rectangle=True,
-        )
-        pressure_icon = Image.open(f"{path}/icons/weather-{pressure_desc.lower()}.png")
-        img.paste(pressure_icon, (80, 48), mask=pressure_icon)
+        # t = time.time()
+        # mean_pressure, change_per_hour, trend = analyse_pressure(
+        #     PRESSURE.collect()[0].samples[0].value, t
+        # )
+        # pressure_string = f"{int(mean_pressure):,} {trend}"
+        # img = overlay_text(
+        #     img, (WIDTH - margin, 48), pressure_string, font_lg, align_right=True
+        # )
+        # pressure_desc = describe_pressure(mean_pressure).upper()
+        # spacing = font_lg.getsize(pressure_string.replace(",", ""))[1] + 1
+        # img = overlay_text(
+        #     img,
+        #     (WIDTH - margin - 1, 48 + spacing),
+        #     pressure_desc,
+        #     font_sm,
+        #     align_right=True,
+        #     rectangle=True,
+        # )
+        # pressure_icon = Image.open(f"{path}/icons/weather-{pressure_desc.lower()}.png")
+        # img.paste(pressure_icon, (80, 48), mask=pressure_icon)
 
         # Display image
         # Light
