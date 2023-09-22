@@ -858,7 +858,25 @@ def sun_moon_time(city_name, time_zone):
     return (progress, period, day, local_dt)
 
 
-def draw_background(progress, period, day):
+def aqi_to_color(aqi):
+    """Return a color based on AQI value."""
+    if 0 <= aqi <= 50:
+        return (0, 128, 0)  # Green
+    elif 51 <= aqi <= 100:
+        return (255, 255, 0)  # Yellow
+    elif 101 <= aqi <= 150:
+        return (255, 165, 0)  # Orange
+    elif 151 <= aqi <= 200:
+        return (255, 0, 0)  # Red
+    elif 201 <= aqi <= 300:
+        return (128, 0, 128)  # Purple
+    elif 301 <= aqi <= 500:
+        return (128, 0, 0)  # Maroon
+    else:
+        return (0, 0, 0)  # Default to black for invalid AQI values
+
+
+def draw_background(progress, period, day, aqi):
     """Given an amount of progress through the day or night, draw the
     background colour and overlay a blurred sun/moon."""
 
@@ -874,7 +892,7 @@ def draw_background(progress, period, day):
     y = calculate_y_pos(x, centre)
 
     # Background colour
-    background = map_colour(x, 80, mid_hue, day_hue, day)
+    background = aqi_to_color(aqi)
 
     # New image for background colour
     img = Image.new("RGBA", (WIDTH, HEIGHT), color=background)
@@ -1245,9 +1263,19 @@ if __name__ == "__main__":
         if DEBUG:
             logging.info("Sensor data: {}".format(collect_all_data()))
 
+        internal_aqi: int = int(
+            aqi.to_aqi(
+                [
+                    (aqi.POLLUTANT_PM25, PM25.collect()[0].samples[0].value),
+                    (aqi.POLLUTANT_PM10, PM10.collect()[0].samples[0].value),
+                ]
+            )
+        )
+        external_aqi = get_external_AQI()
+
         path = os.path.dirname(os.path.realpath(__file__))
         progress, period, day, local_dt = sun_moon_time(city_name, time_zone)
-        background = draw_background(progress, period, day)
+        background = draw_background(progress, period, day, external_aqi)
 
         # Time.
         time_elapsed = time.time() - start_time
@@ -1316,23 +1344,13 @@ if __name__ == "__main__":
         humidity_icon = Image.open(f"{path}/icons/humidity-{humidity_desc.lower()}.png")
         img.paste(humidity_icon, (margin, 48), mask=humidity_icon)
 
-        internal_aqi: int = int(
-            aqi.to_aqi(
-                [
-                    (aqi.POLLUTANT_PM25, PM25.collect()[0].samples[0].value),
-                    (aqi.POLLUTANT_PM10, PM10.collect()[0].samples[0].value),
-                ]
-            )
-        )
-        external_aqi = get_external_AQI()
-
         internal_aqi_str = f"{internal_aqi}/{external_aqi}"
         img = overlay_text(
             img, (WIDTH - margin, 18), internal_aqi_str, font_lg, align_right=True
         )
         spacing = font_lg.getsize(internal_aqi_str.replace(",", ""))[1] + 1
 
-        aqi_desc = describe_aqi(internal_aqi).upper()
+        aqi_desc = describe_aqi(external_aqi).upper()
         img = overlay_text(
             img,
             (WIDTH - margin - 1, 18 + spacing),
