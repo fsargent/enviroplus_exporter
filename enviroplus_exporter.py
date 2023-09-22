@@ -1005,7 +1005,9 @@ def describeAQI(aqi: int) -> str:
     # PM2.5	<27		27–62		62–97		97–370		>370
     # PM10	<40		40–80		80–120		120–240		>240
     # Good	Fair	Poor	Very poor	Extremely poor
-    if aqi < 50:
+    if aqi < 0:
+        return "???"
+    if 0 < aqi < 50:
         return "Good"
     if 51 <= aqi <= 100:
         return "OK"
@@ -1020,10 +1022,10 @@ def describeAQI(aqi: int) -> str:
 
 def get_external_AQI() -> int:
     # Set the API endpoint and parameters
-    LATITUDE = "37.7677674"
-    LONGITUDE = "-122.4254139"
+    LATITUDE = os.getenv("LATITUDE", "")
+    LONGITUDE = os.getenv("LONGITUDE", "")
     WAQI_API_KEY = os.getenv("WAQI_API_KEY", "")
-    url = f"https://api.waqi.info/feed/geo:${LATITUDE};${LONGITUDE}/?token=${WAQI_API_KEY}"
+    url = f"https://api.waqi.info/feed/geo:{LATITUDE};{LONGITUDE}/?token={WAQI_API_KEY}"
 
     # Send the request and get the response
     response = requests.get(url, timeout=10)
