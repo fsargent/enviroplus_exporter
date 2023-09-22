@@ -8,29 +8,23 @@ from datetime import datetime, timedelta
 from threading import Thread
 
 import aqi
+import board
+import notecard.notecard as notecard
 import numpy
 import pytz
 import requests
+import SafecastPy
 import ST7735
+from adafruit_lc709203f import LC709203F, PackSize
 from astral.geocoder import database, lookup
 from astral.sun import sun
-from fonts.ttf import RobotoMedium as UserFont
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
-
-try:
-    from smbus2 import SMBus
-except ImportError:
-    from smbus import SMBus
-
-import board
-import notecard.notecard as notecard
-import SafecastPy
-from adafruit_lc709203f import LC709203F, PackSize
 from bme280 import BME280
 from enviroplus import gas
+from fonts.ttf import RobotoMedium as UserFont
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from periphery import Serial
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from pms5003 import PMS5003
 from pms5003 import ChecksumMismatchError as pmsChecksumMismatchError
 from pms5003 import ReadTimeoutError as pmsReadTimeoutError
