@@ -983,7 +983,7 @@ def describe_pressure(pressure):
 
 def describe_humidity(humidity):
     """Convert relative humidity into good/bad description."""
-    return "good" if 40 < humidity < 60 else "bad"
+    return "good" if 30 < humidity < 70 else "bad"
 
 
 def describe_light(light):
@@ -998,7 +998,7 @@ def describe_light(light):
         return "bright"
 
 
-def describeAQI(aqi: int) -> str:
+def describe_aqi(aqi: int) -> str:
     # Calculate the Air Quality using the EPA's forumla
     # https://www.epa.vic.gov.au/for-community/monitoring-your-environment/about-epa-airwatch/calculate-air-quality-categories
     # HomeKit	1		2		3		4		5
@@ -1324,14 +1324,15 @@ if __name__ == "__main__":
                 ]
             )
         )
+        external_aqi = get_external_AQI()
 
-        aqi_string = f"AQI In: {int(internal_aqi):,}"
+        internal_aqi_str = f"AQI: {internal_aqi}/{external_aqi}"
         img = overlay_text(
-            img, (WIDTH - margin, 18), aqi_string, font_lg, align_right=True
+            img, (WIDTH - margin, 18), internal_aqi_str, font_lg, align_right=True
         )
-        spacing = font_lg.getsize(aqi_string.replace(",", ""))[1] + 1
+        spacing = font_lg.getsize(internal_aqi_str.replace(",", ""))[1] + 1
 
-        aqi_desc = describeAQI(internal_aqi).upper()
+        aqi_desc = describe_aqi(internal_aqi).upper()
         img = overlay_text(
             img,
             (WIDTH - margin - 1, 18 + spacing),
@@ -1340,29 +1341,28 @@ if __name__ == "__main__":
             align_right=True,
             rectangle=True,
         )
-        if internal_aqi > 101:
-            internal_aqi_icon = Image.open(f"{path}/icons/aqi-bad.png")
+        if external_aqi > 101:
+            external_aqi_icon = Image.open(f"{path}/icons/aqi-bad.png")
         else:
-            internal_aqi_icon = Image.open(f"{path}/icons/aqi.png")
-        # img.paste(internal_aqi_icon, (80, 18), mask=internal_aqi_icon)
+            external_aqi_icon = Image.open(f"{path}/icons/aqi.png")
+        img.paste(external_aqi_icon, (80, 18), mask=external_aqi_icon.split()[-1])
 
         # External AQI
-        external_aqi = get_external_AQI()
-        external_aqi_str = f"AQI Out: {int(external_aqi):,}"
-        img = overlay_text(
-            img, (WIDTH - margin, 48), external_aqi_str, font_lg, align_right=True
-        )
-        spacing = font_lg.getsize(external_aqi_str.replace(",", ""))[1] + 1
+        # external_aqi_str = f"ExtAQI: {int(external_aqi):,}"
+        # img = overlay_text(
+        #     img, (WIDTH - margin, 48), external_aqi_str, font_lg, align_right=True
+        # )
+        # spacing = font_lg.getsize(external_aqi_str.replace(",", ""))[1] + 1
 
-        external_aqi_desc = describeAQI(external_aqi).upper()
-        img = overlay_text(
-            img,
-            (WIDTH - margin - 1, 48 + spacing),
-            aqi_desc,
-            font_sm,
-            align_right=True,
-            rectangle=True,
-        )
+        # external_aqi_desc = describe_aqi(external_aqi).upper()
+        # img = overlay_text(
+        #     img,
+        #     (WIDTH - margin - 1, 48 + spacing),
+        #     external_aqi_desc,
+        #     font_sm,
+        #     align_right=True,
+        #     rectangle=True,
+        # )
         # if external_aqi > 101:
         #     external_aqi_icon = Image.open(f"{path}/icons/aqi-bad.png")
         # else:
@@ -1371,30 +1371,30 @@ if __name__ == "__main__":
 
         # Pressure
 
-        # t = time.time()
-        # mean_pressure, change_per_hour, trend = analyse_pressure(
-        #     PRESSURE.collect()[0].samples[0].value, t
-        # )
-        # pressure_string = f"{int(mean_pressure):,} {trend}"
-        # img = overlay_text(
-        #     img, (WIDTH - margin, 48), pressure_string, font_lg, align_right=True
-        # )
-        # pressure_desc = describe_pressure(mean_pressure).upper()
-        # spacing = font_lg.getsize(pressure_string.replace(",", ""))[1] + 1
-        # img = overlay_text(
-        #     img,
-        #     (WIDTH - margin - 1, 48 + spacing),
-        #     pressure_desc,
-        #     font_sm,
-        #     align_right=True,
-        #     rectangle=True,
-        # )
-        # pressure_icon = Image.open(f"{path}/icons/weather-{pressure_desc.lower()}.png")
-        # img.paste(pressure_icon, (80, 48), mask=pressure_icon)
+        t = time.time()
+        mean_pressure, change_per_hour, trend = analyse_pressure(
+            PRESSURE.collect()[0].samples[0].value, t
+        )
+        pressure_string = f"{int(mean_pressure):,} {trend}"
+        img = overlay_text(
+            img, (WIDTH - margin, 48), pressure_string, font_lg, align_right=True
+        )
+        pressure_desc = describe_pressure(mean_pressure).upper()
+        spacing = font_lg.getsize(pressure_string.replace(",", ""))[1] + 1
+        img = overlay_text(
+            img,
+            (WIDTH - margin - 1, 48 + spacing),
+            pressure_desc,
+            font_sm,
+            align_right=True,
+            rectangle=True,
+        )
+        pressure_icon = Image.open(f"{path}/icons/weather-{pressure_desc.lower()}.png")
+        img.paste(pressure_icon, (80, 48), mask=pressure_icon)
 
         # Display image
         # Light
-        print(LUX.collect()[0].samples[0].value)
+        # print(f"Lux: {LUX.collect()[0].samples[0].value}")
         if LUX.collect()[0].samples[0].value < 10:
             disp.set_backlight(0)
             image_blank = Image.new("RGBA", (WIDTH, HEIGHT), color=(0, 0, 0))
