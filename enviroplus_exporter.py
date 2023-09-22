@@ -1020,12 +1020,10 @@ def describeAQI(aqi: int) -> str:
 
 def get_external_AQI() -> int:
     # Set the API endpoint and parameters
-    BASE_URL = "https://api.waqi.info"
-    ENDPOINT = "/feed/{}"
-    ZIP_CODE = "94103"  # or use the name of the city, for example: "San Francisco"
+    LATITUDE = "37.7677674"
+    LONGITUDE = "-122.4254139"
     WAQI_API_KEY = os.getenv("WAQI_API_KEY", "")
-
-    url = BASE_URL + ENDPOINT.format(ZIP_CODE) + "/?token=" + WAQI_API_KEY
+    url = f"https://api.waqi.info/feed/geo:${LATITUDE};${LONGITUDE}/?token=${WAQI_API_KEY}"
 
     # Send the request and get the response
     response = requests.get(url, timeout=10)
@@ -1325,7 +1323,7 @@ if __name__ == "__main__":
             )
         )
 
-        aqi_string = f"AQI In{int(internal_aqi):,}"
+        aqi_string = f"AQI In: {int(internal_aqi):,}"
         img = overlay_text(
             img, (WIDTH - margin, 18), aqi_string, font_lg, align_right=True
         )
@@ -1348,7 +1346,7 @@ if __name__ == "__main__":
 
         # External AQI
         external_aqi = get_external_AQI()
-        external_aqi_str = f"AQI Out{int(external_aqi):,}"
+        external_aqi_str = f"AQI Out: {int(external_aqi):,}"
         img = overlay_text(
             img, (WIDTH - margin, 48), external_aqi_str, font_lg, align_right=True
         )
