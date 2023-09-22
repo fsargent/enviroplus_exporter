@@ -1316,7 +1316,7 @@ if __name__ == "__main__":
         humidity_icon = Image.open(f"{path}/icons/humidity-{humidity_desc.lower()}.png")
         img.paste(humidity_icon, (margin, 48), mask=humidity_icon)
 
-        myaqi: int = int(
+        internal_aqi: int = int(
             aqi.to_aqi(
                 [
                     (aqi.POLLUTANT_PM25, PM25.collect()[0].samples[0].value),
@@ -1325,13 +1325,13 @@ if __name__ == "__main__":
             )
         )
 
-        aqi_string = f"AQI In{int(myaqi):,}"
+        aqi_string = f"AQI In{int(internal_aqi):,}"
         img = overlay_text(
             img, (WIDTH - margin, 18), aqi_string, font_lg, align_right=True
         )
         spacing = font_lg.getsize(aqi_string.replace(",", ""))[1] + 1
 
-        aqi_desc = describeAQI(myaqi).upper()
+        aqi_desc = describeAQI(internal_aqi).upper()
         img = overlay_text(
             img,
             (WIDTH - margin - 1, 18 + spacing),
@@ -1340,18 +1340,21 @@ if __name__ == "__main__":
             align_right=True,
             rectangle=True,
         )
-        light_icon = Image.open(f"{path}/icons/weather-change.png")
-        img.paste(humidity_icon, (80, 18), mask=light_icon)
+        if internal_aqi > 101:
+            internal_aqi_icon = Image.open(f"{path}/icons/aqi-bad.png")
+        else:
+            internal_aqi_icon = Image.open(f"{path}/icons/aqi.png")
+        img.paste(internal_aqi_icon, (80, 18), mask=internal_aqi_icon)
 
         # External AQI
-
-        external_aqi_str = f"AQI Out{int(get_external_AQI()):,}"
+        external_aqi = get_external_AQI()
+        external_aqi_str = f"AQI Out{int(external_aqi):,}"
         img = overlay_text(
             img, (WIDTH - margin, 48), external_aqi_str, font_lg, align_right=True
         )
         spacing = font_lg.getsize(external_aqi_str.replace(",", ""))[1] + 1
 
-        aqi_desc = describeAQI(get_external_AQI()).upper()
+        external_aqi_desc = describeAQI(external_aqi).upper()
         img = overlay_text(
             img,
             (WIDTH - margin - 1, 48 + spacing),
@@ -1360,8 +1363,11 @@ if __name__ == "__main__":
             align_right=True,
             rectangle=True,
         )
-        pressure_icon = Image.open(f"{path}/icons/weather-{aqi_desc.lower()}.png")
-        img.paste(pressure_icon, (80, 48), mask=pressure_icon)
+        if external_aqi > 101:
+            external_aqi_icon = Image.open(f"{path}/icons/aqi-bad.png")
+        else:
+            external_aqi_icon = Image.open(f"{path}/icons/aqi.png")
+        img.paste(external_aqi_icon, (80, 48), mask=external_aqi_icon)
 
         # Pressure
 
