@@ -1344,7 +1344,7 @@ if __name__ == "__main__":
             internal_aqi_icon = Image.open(f"{path}/icons/aqi-bad.png")
         else:
             internal_aqi_icon = Image.open(f"{path}/icons/aqi.png")
-        img.paste(internal_aqi_icon, (80, 18), mask=internal_aqi_icon)
+        # img.paste(internal_aqi_icon, (80, 18), mask=internal_aqi_icon)
 
         # External AQI
         external_aqi = get_external_AQI()
@@ -1363,11 +1363,11 @@ if __name__ == "__main__":
             align_right=True,
             rectangle=True,
         )
-        if external_aqi > 101:
-            external_aqi_icon = Image.open(f"{path}/icons/aqi-bad.png")
-        else:
-            external_aqi_icon = Image.open(f"{path}/icons/aqi.png")
-        img.paste(external_aqi_icon, (80, 48), mask=external_aqi_icon)
+        # if external_aqi > 101:
+        #     external_aqi_icon = Image.open(f"{path}/icons/aqi-bad.png")
+        # else:
+        #     external_aqi_icon = Image.open(f"{path}/icons/aqi.png")
+        # img.paste(external_aqi_icon, (80, 48), mask=external_aqi_icon)
 
         # Pressure
 
