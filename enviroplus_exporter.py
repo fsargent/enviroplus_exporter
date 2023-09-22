@@ -19,6 +19,7 @@ from adafruit_lc709203f import LC709203F, PackSize
 from astral.geocoder import database, lookup
 from astral.sun import sun
 from bme280 import BME280
+from dotenv import load_dotenv
 from enviroplus import gas
 from fonts.ttf import RobotoMedium as UserFont
 from influxdb_client import InfluxDBClient, Point
@@ -30,6 +31,8 @@ from pms5003 import ChecksumMismatchError as pmsChecksumMismatchError
 from pms5003 import ReadTimeoutError as pmsReadTimeoutError
 from pms5003 import SerialTimeoutError as pmsSerialTimeoutError
 from prometheus_client import Gauge, Histogram, start_http_server
+
+load_dotenv()
 
 try:
     from smbus2 import SMBus
@@ -1033,6 +1036,29 @@ def describeAQI(aqi):
         return "?"
 
 
+def get_external_AQI() -> int:
+    # Set the API endpoint and parameters
+    BASE_URL = "https://api.waqi.info"
+    ENDPOINT = "/feed/{}"
+    ZIP_CODE = "94103"  # or use the name of the city, for example: "San Francisco"
+    WAQI_API_KEY = os.getenv("WAQI_API_KEY", "")
+
+    url = BASE_URL + ENDPOINT.format(ZIP_CODE) + "/?token=" + WAQI_API_KEY
+
+    # Send the request and get the response
+    response = requests.get(url, timeout=10)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = response.json()
+        if data["status"] == "ok":
+            return int(data["data"]["aqi"])
+        else:
+            print("Error:", data["data"])
+    print("Failed to retrieve AQI. Status code:", response.status_code, response.text)
+    return -1
+
+
 # Initialise the LCD
 disp = ST7735.ST7735(
     port=0, cs=1, dc=9, backlight=12, rotation=270, spi_speed_hz=10000000
@@ -1319,7 +1345,7 @@ if __name__ == "__main__":
             ]
         )
 
-        aqi_string = f"{int(myaqi):,}"
+        aqi_string = f"AQI In{int(myaqi):,}"
         img = overlay_text(
             img, (WIDTH - margin, 18), aqi_string, font_lg, align_right=True
         )
@@ -1336,6 +1362,26 @@ if __name__ == "__main__":
         )
         light_icon = Image.open(f"{path}/icons/weather-change.png")
         img.paste(humidity_icon, (80, 18), mask=light_icon)
+
+        # External AQI
+
+        external_aqi_str = f"AQI Out{int(get_external_AQI()):,}"
+        img = overlay_text(
+            img, (WIDTH - margin, 48), external_aqi_str, font_lg, align_right=True
+        )
+        spacing = font_lg.getsize(external_aqi_str.replace(",", ""))[1] + 1
+
+        aqi_desc = describeAQI(external_aqi_str).upper()
+        img = overlay_text(
+            img,
+            (WIDTH - margin - 1, 48 + spacing),
+            aqi_desc,
+            font_sm,
+            align_right=True,
+            rectangle=True,
+        )
+        pressure_icon = Image.open(f"{path}/icons/weather-{aqi_desc.lower()}.png")
+        img.paste(pressure_icon, (80, 48), mask=pressure_icon)
 
         # Pressure
 
