@@ -1351,7 +1351,7 @@ if __name__ == "__main__":
         )
         spacing = font_lg.getsize(external_aqi_str.replace(",", ""))[1] + 1
 
-        aqi_desc = describeAQI(external_aqi_str).upper()
+        aqi_desc = describeAQI(get_external_AQI()).upper()
         img = overlay_text(
             img,
             (WIDTH - margin - 1, 48 + spacing),
