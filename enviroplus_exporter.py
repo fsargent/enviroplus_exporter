@@ -1326,7 +1326,7 @@ if __name__ == "__main__":
         )
         external_aqi = get_external_AQI()
 
-        internal_aqi_str = f"AQI: {internal_aqi}/{external_aqi}"
+        internal_aqi_str = f"{internal_aqi}/{external_aqi}"
         img = overlay_text(
             img, (WIDTH - margin, 18), internal_aqi_str, font_lg, align_right=True
         )
