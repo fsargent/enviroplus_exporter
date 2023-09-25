@@ -8,7 +8,7 @@ from astral.sun import sun
 from fonts.ttf import RobotoMedium as UserFont
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-from aqi_utilties import aqi_to_color
+from aqi_utilities import aqi_to_color
 
 
 class Display:
@@ -19,7 +19,7 @@ class Display:
 
         self.disp.begin()
         self.WIDTH = self.disp.width
-        self.HEIGHT = self.disp.HEIGHT
+        self.HEIGHT = self.disp.height
 
         # Values that alter the look of the background
         self.blur = 50

@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 from typing import Optional
@@ -6,15 +7,24 @@ import aqi
 import board
 import numpy
 from adafruit_lc709203f import LC709203F, PackSize
-from aqi_utilities import get_external_AQI
 from bme280 import BME280
 from dotenv import load_dotenv
 from enviroplus import gas
+from ltr559 import LTR559
 from pms5003 import PMS5003
 from pms5003 import ChecksumMismatchError as pmsChecksumMismatchError
 from pms5003 import ReadTimeoutError as pmsReadTimeoutError
 from pms5003 import SerialTimeoutError as pmsSerialTimeoutError
 from prometheus_client import Gauge, Histogram
+from smbus import SMBus
+
+from aqi_utilities import get_external_AQI
+
+ltr559 = LTR559()
+
+bus = SMBus(1)
+bme280 = BME280(i2c_dev=bus)
+pms5003 = PMS5003()
 
 load_dotenv()
 
@@ -29,23 +39,6 @@ LATITUDE = os.getenv("LATITUDE", "")
 LONGITUDE = os.getenv("LONGITUDE", "")
 WAQI_API_KEY = os.getenv("WAQI_API_KEY", "")
 
-try:
-    from smbus2 import SMBus
-except ImportError:
-    from smbus import SMBus
-
-try:
-    # Transitional fix for breaking change in LTR559
-    from ltr559 import LTR559
-
-    ltr559 = LTR559()
-except ImportError:
-    import ltr559
-
-bus = SMBus(1)
-bme280 = BME280(i2c_dev=bus)
-pms5003 = PMS5003()
-
 
 # Pressure variables
 pressure_vals = []
@@ -54,11 +47,12 @@ num_vals = 1000
 interval = 1
 trend = "-"
 
-battery_sensor = False
-sensor = LC709203F(board.I2C())
-battery_sensor = True
 
-if battery_sensor:
+sensor = None
+with contextlib.suppress(ValueError):
+    sensor = LC709203F(board.I2C())
+
+if sensor:
     logging.debug("## LC709203F battery monitor ##")
     try:
         logging.debug(f"Sensor IC version: {hex(sensor.ic_version)}")
@@ -607,7 +601,6 @@ class TemperatureSensor:
 
 
 # def display_temperature_range(temperature, min_temp, max_temp):
-
 #     if min_temp is not None and max_temp is not None:
 #         range_string = f"{(min_temp*1.8)+32:.0f}-{(max_temp*1.8)+32:.0f}"
 #     else:
@@ -671,10 +664,10 @@ def collect_all_data() -> dict[str, float]:
 
     # sensor_data["corr_temperature"] = get_current_temperature()
 
-    sensor_data["corr_humidity"] = correct_humidity(
-        sensor_data["HUMIDITY"],
-        sensor_data["TEMPERATURE"],
-        sensor_data["corr_temperature"],
-    )
+    # sensor_data["corr_humidity"] = correct_humidity(
+    #     sensor_data["humidity"],
+    #     sensor_data["temperature"],
+    #     sensor_data["corr_temperature"],
+    # )
 
     return sensor_data

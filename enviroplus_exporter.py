@@ -7,9 +7,9 @@ from dotenv import load_dotenv
 from PIL import Image
 from prometheus_client import start_http_server
 
-from aqi_utilties import describe_aqi
+from aqi_utilities import describe_aqi
 from args import setup_arguments
-from display import Display, display, overlay_text
+from display import Display
 
 # from clients import post_to_luftdaten, post_to_safecast, post_to_notehub
 from sensors import (
@@ -40,7 +40,7 @@ DEBUG = os.getenv("DEBUG", "false") == "true"
 
 
 # Initialze Display
-disp = display()
+disp = Display()
 
 if __name__ == "__main__":
     args = setup_arguments()
@@ -88,10 +88,10 @@ if __name__ == "__main__":
         # time_elapsed = time.time() - start_time
         date_string = local_dt.strftime("%d %b %y").lstrip("0")
         time_string = local_dt.strftime("%I:%M:%S")
-        img = overlay_text(
+        img = display.overlay_text(
             background, (0 + disp.margin, 0 + disp.margin), time_string, disp.font_lg
         )
-        img = overlay_text(
+        img = display.overlay_text(
             img,
             (disp.WIDTH - disp.margin, 0 + disp.margin),
             date_string,
@@ -101,12 +101,12 @@ if __name__ == "__main__":
 
         # Temperature
         temperature = Temperature(sensor_data["temperature"])
-        img = overlay_text(
+        img = display.overlay_text(
             img, (68, 18), temperature.to_fahrenheit(), disp.font_lg, align_right=True
         )
         spacing = disp.font_lg.getsize(temperature.to_fahrenheit())[1] + 1
 
-        # img = overlay_text(
+        # img = display.overlay_text(
         #     img,
         #     (68, 18 + spacing),
         #     range_string,
@@ -118,14 +118,14 @@ if __name__ == "__main__":
         img.paste(temp_icon, (disp.margin, 18), mask=temp_icon)
 
         # Humidity
-        corr_humidity = sensor_data["corr_humidity"]
+        corr_humidity = sensor_data["humidity"]
         humidity_string = f"{corr_humidity:.0f}%"
-        img = overlay_text(
+        img = display.overlay_text(
             img, (68, 48), humidity_string, disp.font_lg, align_right=True
         )
         spacing = disp.font_lg.getsize(humidity_string)[1] + 1
         humidity_desc = describe_humidity(corr_humidity).upper()
-        img = overlay_text(
+        img = display.overlay_text(
             img,
             (68, 48 + spacing),
             humidity_desc,
@@ -139,7 +139,7 @@ if __name__ == "__main__":
         internal_aqi_str = (
             f"{sensor_data['internal_aqi']}/{sensor_data['external_aqi']}"
         )
-        img = overlay_text(
+        img = display.overlay_text(
             img,
             (disp.WIDTH - disp.margin, 18),
             internal_aqi_str,
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         spacing = disp.font_lg.getsize(internal_aqi_str.replace(",", ""))[1] + 1
 
         aqi_desc = describe_aqi(sensor_data["external_aqi"]).upper()
-        img = overlay_text(
+        img = display.overlay_text(
             img,
             (disp.WIDTH - disp.margin - 1, 18 + spacing),
             aqi_desc,
@@ -169,7 +169,7 @@ if __name__ == "__main__":
             sensor_data["pressure"], t
         )
         pressure_string = f"{int(mean_pressure):,} {trend}"
-        img = overlay_text(
+        img = display.overlay_text(
             img,
             (disp.WIDTH - disp.margin, 48),
             pressure_string,
@@ -178,7 +178,7 @@ if __name__ == "__main__":
         )
         pressure_desc = describe_pressure(mean_pressure).upper()
         spacing = disp.font_lg.getsize(pressure_string.replace(",", ""))[1] + 1
-        img = overlay_text(
+        img = display.overlay_text(
             img,
             (disp.WIDTH - disp.margin - 1, 48 + spacing),
             pressure_desc,
