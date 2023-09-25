@@ -13,7 +13,7 @@ from display import Display
 
 # from clients import post_to_luftdaten, post_to_safecast, post_to_notehub
 from sensors import (
-    Temperature,
+    Celsius,
     analyse_pressure,
     collect_all_data,
     describe_humidity,
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         )
 
         # Temperature
-        temperature = Temperature(sensor_data["temperature"])
+        temperature = Celsius(sensor_data["temperature"])
         img = display.overlay_text(
             img, (68, 18), temperature.to_fahrenheit(), disp.font_lg, align_right=True
         )
