@@ -16,6 +16,7 @@ import requests
 import SafecastPy
 import ST7735
 from adafruit_lc709203f import LC709203F, PackSize
+from aqi_utilties import aqi_to_color, describe_aqi, get_external_AQI
 from astral.geocoder import database, lookup
 from astral.sun import sun
 from bme280 import BME280
@@ -858,24 +859,6 @@ def sun_moon_time(city_name, time_zone):
     return (progress, period, day, local_dt)
 
 
-def aqi_to_color(aqi):
-    """Return a color based on AQI value."""
-    if 0 <= aqi <= 50:
-        return (0, 128, 0)  # Green
-    elif 51 <= aqi <= 100:
-        return (192, 192, 0)  # Yellow
-    elif 101 <= aqi <= 150:
-        return (192, 128, 0)  # Orange
-    elif 151 <= aqi <= 200:
-        return (192, 0, 0)  # Red
-    elif 201 <= aqi <= 300:
-        return (128, 0, 128)  # Purple
-    elif 301 <= aqi <= 500:
-        return (128, 0, 0)  # Maroon
-    else:
-        return (0, 0, 0)  # Default to black for invalid AQI values
-
-
 def draw_background(progress, period, day, aqi):
     """Given an amount of progress through the day or night, draw the
     background colour and overlay a blurred sun/moon."""
@@ -1014,49 +997,6 @@ def describe_light(light):
         return "light"
     else:
         return "bright"
-
-
-def describe_aqi(aqi: int) -> str:
-    # Calculate the Air Quality using the EPA's forumla
-    # https://www.epa.vic.gov.au/for-community/monitoring-your-environment/about-epa-airwatch/calculate-air-quality-categories
-    # HomeKit	1		2		3		4		5
-    # PM2.5	<27		27–62		62–97		97–370		>370
-    # PM10	<40		40–80		80–120		120–240		>240
-    # Good	Fair	Poor	Very poor	Extremely poor
-    if aqi < 0:
-        return "???"
-    if 0 < aqi < 50:
-        return "Good"
-    if 51 <= aqi <= 100:
-        return "OK"
-    if 101 <= aqi <= 150:
-        return "Poor"
-    if 151 <= aqi <= 200:
-        return "Bad"
-    if 201 <= aqi <= 300:
-        return "Very Bad"
-    return "XXX" if aqi > 300 else "?"
-
-
-def get_external_AQI() -> int:
-    # Set the API endpoint and parameters
-    LATITUDE = os.getenv("LATITUDE", "")
-    LONGITUDE = os.getenv("LONGITUDE", "")
-    WAQI_API_KEY = os.getenv("WAQI_API_KEY", "")
-    url = f"https://api.waqi.info/feed/geo:{LATITUDE};{LONGITUDE}/?token={WAQI_API_KEY}"
-
-    # Send the request and get the response
-    response = requests.get(url, timeout=10)
-
-    # Check if the request was successful
-    if response.status_code == 200:
-        data = response.json()
-        if data["status"] == "ok":
-            return int(data["data"]["aqi"])
-        else:
-            print("Error:", data["data"])
-    print("Failed to retrieve AQI. Status code:", response.status_code, response.text)
-    return -1
 
 
 # Initialise the LCD
