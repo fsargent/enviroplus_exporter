@@ -863,11 +863,11 @@ def aqi_to_color(aqi):
     if 0 <= aqi <= 50:
         return (0, 128, 0)  # Green
     elif 51 <= aqi <= 100:
-        return (255, 255, 0)  # Yellow
+        return (192, 192, 0)  # Yellow
     elif 101 <= aqi <= 150:
-        return (255, 165, 0)  # Orange
+        return (192, 128, 0)  # Orange
     elif 151 <= aqi <= 200:
-        return (255, 0, 0)  # Red
+        return (192, 0, 0)  # Red
     elif 201 <= aqi <= 300:
         return (128, 0, 128)  # Purple
     elif 301 <= aqi <= 500:
