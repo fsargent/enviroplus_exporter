@@ -22,6 +22,7 @@ from sensors import (
 
 load_dotenv()
 
+
 logging.basicConfig(
     format="%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s",
     level=logging.INFO,
@@ -100,11 +101,15 @@ if __name__ == "__main__":
         )
 
         # Temperature
-        temperature = Celsius(sensor_data["temperature"])
+        temperature = str(Celsius(sensor_data["temperature"]).to_fahrenheit())
         img = display.overlay_text(
-            img, (68, 18), temperature.to_fahrenheit(), disp.font_lg, align_right=True
+            img,
+            (68, 18),
+            temperature,
+            disp.font_lg,
+            align_right=True,
         )
-        spacing = disp.font_lg.getsize(temperature.to_fahrenheit())[1] + 1
+        spacing = disp.font_lg.getsize(temperature)[1] + 1
 
         # img = display.overlay_text(
         #     img,
@@ -191,10 +196,10 @@ if __name__ == "__main__":
 
         # Light
         if sensor_data["lux"] < LUX_THRESHOLD:
-            disp.set_backlight(0)
+            disp.disp.set_backlight(0)
             image_blank = Image.new("RGBA", (disp.WIDTH, disp.HEIGHT), color=(0, 0, 0))
-            disp.display(image_blank)
+            disp.disp.display(image_blank)
         else:
-            disp.set_backlight(1)
-            disp.display(img)
+            disp.disp.set_backlight(1)
+            disp.disp.display(img)
         time.sleep(5)

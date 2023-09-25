@@ -10,7 +10,6 @@ from adafruit_lc709203f import LC709203F, PackSize
 from bme280 import BME280
 from dotenv import load_dotenv
 from enviroplus import gas
-from ltr559 import LTR559
 from pms5003 import PMS5003
 from pms5003 import ChecksumMismatchError as pmsChecksumMismatchError
 from pms5003 import ReadTimeoutError as pmsReadTimeoutError
@@ -18,15 +17,27 @@ from pms5003 import SerialTimeoutError as pmsSerialTimeoutError
 from prometheus_client import Gauge, Histogram
 from smbus import SMBus
 
+try:
+    # Transitional fix for breaking change in LTR559
+    from ltr559 import LTR559
+
+    ltr559 = LTR559()
+except ImportError:
+    import ltr559
+
 from aqi_utilities import get_external_AQI
 
-ltr559 = LTR559()
+DEBUG = os.getenv("DEBUG", "false") == "true"
 
 bus = SMBus(1)
 bme280 = BME280(i2c_dev=bus)
 pms5003 = PMS5003()
 
+
 load_dotenv()
+battery_sensor = None
+with contextlib.suppress(ValueError):
+    battery_sensor = LC709203F(board.I2C())
 
 
 logging.basicConfig(
@@ -46,23 +57,6 @@ time_vals = []
 num_vals = 1000
 interval = 1
 trend = "-"
-
-
-sensor = None
-with contextlib.suppress(ValueError):
-    sensor = LC709203F(board.I2C())
-
-if sensor:
-    logging.debug("## LC709203F battery monitor ##")
-    try:
-        logging.debug(f"Sensor IC version: {hex(sensor.ic_version)}")
-        # Set the battery pack size to 3000 mAh
-        sensor.pack_size = PackSize.MAH3000
-        sensor.init_RSOC()
-        logging.debug(f"Battery size: {PackSize.string[sensor.pack_sizes]}")
-    except RuntimeError as exception:
-        logging.error(f"Failed to read sensor with error: {exception}")
-        logging.info("Try setting the I2C clock speed to 10000Hz")
 
 
 TEMPERATURE = Gauge("temperature", "Temperature measured (*C)")
@@ -294,7 +288,7 @@ def get_pressure():
     PRESSURE.set(pressure)
 
 
-def get_humidity(humidity_compensation):
+def get_humidity(humidity_compensation=None):
     """Get humidity from the weather sensor."""
     # Increase the humidity_compensation to increase the humidity.
     # Decrease it to decrease the humidity.
@@ -382,10 +376,25 @@ def get_particulates() -> dict[str, float]:
 
 def get_battery():
     """Get the battery voltage and percentage left."""
+
+    if not battery_sensor:
+        return None, None
+    logging.debug("## LC709203F battery monitor ##")
     try:
-        voltage_reading = sensor.cell_voltage
-        percentage_reading = sensor.cell_percent
-        logging.debug(f"Battery: {sensor.cell_voltage} Volts / {sensor.cell_percent} %")
+        logging.debug(f"Sensor IC version: {hex(battery_sensor.ic_version)}")
+        # Set the battery pack size to 3000 mAh
+        battery_sensor.pack_size = PackSize.MAH3000
+        battery_sensor.init_RSOC()
+        logging.debug(f"Battery size: {PackSize.string[battery_sensor.pack_sizes]}")
+    except RuntimeError as exception:
+        logging.error(f"Failed to read sensor with error: {exception}")
+        logging.info("Try setting the I2C clock speed to 10000Hz")
+    try:
+        voltage_reading = battery_sensor.cell_voltage
+        percentage_reading = battery_sensor.cell_percent
+        logging.debug(
+            f"Battery: {battery_sensor.cell_voltage} Volts / {battery_sensor.cell_percent} %"
+        )
         return voltage_reading, percentage_reading
     except (RuntimeError, OSError) as exception:
         logging.warning(f"Failed to read battery monitor with error: {exception}")
@@ -529,10 +538,10 @@ class TemperatureSensor:
         return BME280(i2c_dev=bus)
 
     @staticmethod
-    def get_cpu_temperature() -> Temperature:
+    def get_cpu_temperature() -> float:
         """Get the CPU temperature."""
         with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
-            temp = Temperature(int(f.read()) / 1000.0)
+            temp = int(f.read()) / 1000.0
             return temp
 
     def get_compensated_temperature(self):
@@ -614,18 +623,18 @@ def correct_humidity(humidity, temperature, corr_temperature):
     return min(100, corr_humidity)
 
 
-def poll_sensors(humidity_adjustment):
+def poll_sensors():
     temperature = TemperatureSensor()
 
     voltage_reading, percentage_reading = get_battery()
-    BATTERY_VOLTAGE.set(voltage_reading)
-    BATTERY_PERCENTAGE.set(percentage_reading)
+    BATTERY_VOLTAGE.set(voltage_reading or 0)
+    BATTERY_PERCENTAGE.set(percentage_reading or 0)
 
     CPU_TEMPERATURE.set(temperature.get_cpu_temperature())
     TEMPERATURE.set(temperature.get_compensated_temperature())
 
+    HUMIDITY.set(get_humidity())
     get_gas()
-    HUMIDITY.set(get_humidity(humidity_adjustment))
     get_light()
     get_particulates()
     get_pressure()
@@ -634,6 +643,7 @@ def poll_sensors(humidity_adjustment):
 
 def collect_all_data() -> dict[str, float]:
     """Collect all the data currently set."""
+    poll_sensors()
 
     sensor_data = {
         "temperature": TEMPERATURE.collect()[0].samples[0].value,

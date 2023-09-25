@@ -2,7 +2,6 @@ import datetime
 import logging
 import os
 import time
-from threading import Thread
 
 import notecard.notecard as notecard
 import requests
