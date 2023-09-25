@@ -1413,11 +1413,11 @@ if __name__ == "__main__":
         # Display image
         # Light
         # print(f"Lux: {LUX.collect()[0].samples[0].value}")
-        if LUX.collect()[0].samples[0].value < 10:
-            disp.set_backlight(0)
-            image_blank = Image.new("RGBA", (WIDTH, HEIGHT), color=(0, 0, 0))
-            disp.display(image_blank)
-        else:
-            disp.set_backlight(1)
-            disp.display(img)
+        # if LUX.collect()[0].samples[0].value < 10:
+        #     disp.set_backlight(0)
+        #     image_blank = Image.new("RGBA", (WIDTH, HEIGHT), color=(0, 0, 0))
+        #     disp.display(image_blank)
+        # else:
+        #     disp.set_backlight(1)
+        #     disp.display(img)
         time.sleep(5)
