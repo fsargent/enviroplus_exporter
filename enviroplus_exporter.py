@@ -1418,6 +1418,6 @@ if __name__ == "__main__":
         #     image_blank = Image.new("RGBA", (WIDTH, HEIGHT), color=(0, 0, 0))
         #     disp.display(image_blank)
         # else:
-        #     disp.set_backlight(1)
-        #     disp.display(img)
+        disp.set_backlight(1)
+        disp.display(img)
         time.sleep(5)
