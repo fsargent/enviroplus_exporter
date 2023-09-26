@@ -4,15 +4,14 @@ version = "0.1.0"
 description = ""
 authors = ["Felix Sargent <fsargent@recruitbot.com>"]
 readme = "README.md"
-packages = [{ include = "enviroplus_exporter" }]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.11"
 python-dotenv = "^1.0.0"
 pillow = "^10.0.1"
-enviroplus = { version = "0.0.3", markers = "platform_machine!='armv71'" }
+# enviroplus = { version = "0.0.3", markers = "platform_machine!='armv71'" }
 # RPi.GPIO = { version = "0.7.0", markers = "platform_machine!='armv71'" }
-smbus = { version = "1.1.post2", markers = "platform_machine!='armv71'" }
+# smbus = { version = "1.1.post2", markers = "platform_machine!='armv71'" }
 prometheus-client = "^0.17.1"
 influxdb-client = "^1.37.0"
 requests = "^2.31.0"
