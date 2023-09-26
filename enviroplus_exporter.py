@@ -12,13 +12,7 @@ from args import setup_arguments
 from display import Display
 
 # from clients import post_to_luftdaten, post_to_safecast, post_to_notehub
-from sensors import (
-    Celsius,
-    PressureAnalyzer,
-    SensorMetrics,
-    describe_humidity,
-    describe_pressure,
-)
+from sensors import Celsius, PressureAnalyzer, SensorMetrics
 
 load_dotenv()
 
@@ -42,6 +36,7 @@ Press Ctrl+C to exit!
 
 DEBUG = os.getenv("DEBUG", "false") == "true"
 analyzer = PressureAnalyzer()
+metrics = SensorMetrics()
 
 
 def draw_display(sensor_data):
@@ -96,7 +91,7 @@ def draw_display(sensor_data):
         img, (68, 48), humidity_string, disp.font_lg, align_right=True
     )
     spacing = disp.font_lg.getsize(humidity_string)[1] + 1
-    humidity_desc = describe_humidity(corr_humidity).upper()
+    humidity_desc = metrics.describe_humidity(corr_humidity).upper()
     img = disp.overlay_text(
         img,
         (68, 48 + spacing),
@@ -146,7 +141,7 @@ def draw_display(sensor_data):
         disp.font_lg,
         align_right=True,
     )
-    pressure_desc = describe_pressure(mean_pressure).upper()
+    pressure_desc = metrics.describe_pressure(mean_pressure).upper()
     spacing = disp.font_lg.getsize(pressure_string.replace(",", ""))[1] + 1
     img = disp.overlay_text(
         img,
@@ -197,7 +192,6 @@ if __name__ == "__main__":
     start_time = time.time()
 
     LUX_THRESHOLD = 0
-    metrics = SensorMetrics()
 
     while True:
         draw_display(metrics.latest_values)
