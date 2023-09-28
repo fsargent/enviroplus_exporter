@@ -342,16 +342,13 @@ NOTECARD_TIME_BETWEEN_POSTS = int(os.getenv("NOTECARD_TIME_BETWEEN_POSTS", "600"
 
 # Setup LC709203F battery monitor
 if battery_sensor:
-    if DEBUG:
-        logging.info("## LC709203F battery monitor ##")
+    logging.debug("## LC709203F battery monitor ##")
     try:
-        if DEBUG:
-            logging.info(f"Sensor IC version: {hex(sensor.ic_version)}")
+        logging.debug(f"Sensor IC version: {hex(sensor.ic_version)}")
         # Set the battery pack size to 3000 mAh
         sensor.pack_size = PackSize.MAH3000
         sensor.init_RSOC()
-        if DEBUG:
-            logging.info(f"Battery size: {PackSize.string[sensor.pack_sizes]}")
+        logging.debug(f"Battery size: {PackSize.string[sensor.pack_sizes]}")
     except RuntimeError as exception:
         logging.error(f"Failed to read sensor with error: {exception}")
         logging.info("Try setting the I2C clock speed to 10000Hz")
@@ -457,10 +454,7 @@ def get_battery():
         percentage_reading = sensor.cell_percent
         BATTERY_VOLTAGE.set(voltage_reading)
         BATTERY_PERCENTAGE.set(percentage_reading)
-        if DEBUG:
-            logging.info(
-                f"Battery: {sensor.cell_voltage} Volts / {sensor.cell_percent} %"
-            )
+        logging.debug(f"Battery: {sensor.cell_voltage} Volts / {sensor.cell_percent} %")
     except (RuntimeError, OSError) as exception:
         logging.warning(f"Failed to read battery monitor with error: {exception}")
 
@@ -499,8 +493,7 @@ def post_to_influxdb():
         ]
         try:
             influxdb_api.write(bucket=INFLUXDB_BUCKET, record=data_points)
-            if DEBUG:
-                logging.info("InfluxDB response: OK")
+            logging.debug("InfluxDB response: OK")
         except Exception as exception:
             logging.warning(f"Exception sending to InfluxDB: {exception}")
 
@@ -557,8 +550,7 @@ def post_to_luftdaten():
             )
 
             if response_pin_1.ok and response_pin_11.ok:
-                if DEBUG:
-                    logging.info("Luftdaten response: OK")
+                logging.debug("Luftdaten response: OK")
             else:
                 logging.warning("Luftdaten response: Failed")
         except Exception as exception:
@@ -583,10 +575,7 @@ def post_to_safecast():
                     "height": None,
                 }
             )
-            if DEBUG:
-                logging.info(
-                    f'Safecast PM1 measurement created, id: {measurement["id"]}'
-                )
+            logging.debug(f'Safecast PM1 measurement created, id: {measurement["id"]}')
 
             measurement = safecast.add_measurement(
                 json={
@@ -600,10 +589,9 @@ def post_to_safecast():
                     "height": None,
                 }
             )
-            if DEBUG:
-                logging.info(
-                    f'Safecast PM2.5 measurement created, id: {measurement["id"]}'
-                )
+            logging.debug(
+                f'Safecast PM2.5 measurement created, id: {measurement["id"]}'
+            )
 
             measurement = safecast.add_measurement(
                 json={
@@ -617,10 +605,7 @@ def post_to_safecast():
                     "height": None,
                 }
             )
-            if DEBUG:
-                logging.info(
-                    f'Safecast PM10 measurement created, id: {measurement["id"]}'
-                )
+            logging.debug(f'Safecast PM10 measurement created, id: {measurement["id"]}')
 
             measurement = safecast.add_measurement(
                 json={
@@ -634,10 +619,9 @@ def post_to_safecast():
                     "height": None,
                 }
             )
-            if DEBUG:
-                logging.info(
-                    f'Safecast Temperature measurement created, id: {measurement["id"]}'
-                )
+            logging.debug(
+                f'Safecast Temperature measurement created, id: {measurement["id"]}'
+            )
 
             measurement = safecast.add_measurement(
                 json={
@@ -651,10 +635,9 @@ def post_to_safecast():
                     "height": None,
                 }
             )
-            if DEBUG:
-                logging.info(
-                    f'Safecast Humidity measurement created, id: {measurement["id"]}'
-                )
+            logging.debug(
+                f'Safecast Humidity measurement created, id: {measurement["id"]}'
+            )
 
             measurement = safecast.add_measurement(
                 json={
@@ -668,10 +651,9 @@ def post_to_safecast():
                     "height": None,
                 }
             )
-            if DEBUG:
-                logging.info(
-                    f'Safecast CPU temperature measurement created, id: {measurement["id"]}'
-                )
+            logging.debug(
+                f'Safecast CPU temperature measurement created, id: {measurement["id"]}'
+            )
         except Exception as exception:
             logging.warning(f"Exception sending to Safecast: {exception}")
 
@@ -718,16 +700,14 @@ def post_to_notehub():
                 }
                 try:
                     response = card.Transaction(request)
-                    if DEBUG:
-                        logging.info(f"Notecard response: {response}")
+                    logging.debug(f"Notecard response: {response}")
                 except Exception as exception:
                     logging.warning(f"Notecard data setup error: {exception}")
             # Sync data with Notehub
             request = {"req": "service.sync"}
             try:
                 response = card.Transaction(request)
-                if DEBUG:
-                    logging.info(f"Notecard response: {response}")
+                logging.debug(f"Notecard response: {response}")
             except Exception as exception:
                 logging.warning(f"Notecard sync error: {exception}")
         except Exception as exception:
@@ -1200,8 +1180,7 @@ if __name__ == "__main__":
         get_cpu_temperature()
         if battery_sensor:
             get_battery()
-        if DEBUG:
-            logging.info("Sensor data: {}".format(collect_all_data()))
+        logging.debug("Sensor data: {}".format(collect_all_data()))
 
         internal_aqi: int = int(
             aqi.to_aqi(
