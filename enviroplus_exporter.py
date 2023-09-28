@@ -16,7 +16,6 @@ import requests
 import SafecastPy
 import ST7735
 from adafruit_lc709203f import LC709203F, PackSize
-from aqi_utilties import aqi_to_color, describe_aqi, get_external_AQI
 from astral.geocoder import database, lookup
 from astral.sun import sun
 from bme280 import BME280
@@ -32,6 +31,8 @@ from pms5003 import ChecksumMismatchError as pmsChecksumMismatchError
 from pms5003 import ReadTimeoutError as pmsReadTimeoutError
 from pms5003 import SerialTimeoutError as pmsSerialTimeoutError
 from prometheus_client import Gauge, Histogram, start_http_server
+
+from aqi_utilities import aqi_to_color, describe_aqi, get_external_AQI
 
 load_dotenv()
 
