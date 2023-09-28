@@ -46,14 +46,15 @@ def get_external_AQI(latitude: str, longitude: str, waqi_api_key: str) -> int:
     url = f"https://api.waqi.info/feed/geo:{latitude};{longitude}/?token={waqi_api_key}"
 
     # Send the request and get the response
-    response = requests.get(url, timeout=10)
 
     # Check if the request was successful
-    if response.status_code == 200:
+    try:
+        response = requests.get(url, timeout=10)
         data = response.json()
-        if data["status"] == "ok":
+        if response.status_code == 200:
             return int(data["data"]["aqi"])
-        else:
-            print("Error:", data["data"])
-    print("Failed to retrieve AQI. Status code:", response.status_code, response.text)
-    return -1
+        print("Error:", data["data"])
+        return -1
+    except Exception as e:
+        print(f"Failed to retrieve AQI. {e}")
+        return -1
