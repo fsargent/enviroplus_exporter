@@ -36,6 +36,11 @@ from aqi_utilities import aqi_to_color, describe_aqi, get_external_AQI
 
 load_dotenv()
 
+LATITUDE = os.getenv("LATITUDE", "")
+LONGITUDE = os.getenv("LONGITUDE", "")
+WAQI_API_KEY = os.getenv("WAQI_API_KEY", "")
+DEBUG = os.getenv("DEBUG", "false")
+
 try:
     from smbus2 import SMBus
 except ImportError:
@@ -64,7 +69,6 @@ Press Ctrl+C to exit!
 """
 )
 
-DEBUG = os.getenv("DEBUG", "false") == "true"
 
 bus = SMBus(1)
 bme280 = BME280(i2c_dev=bus)
@@ -1191,7 +1195,7 @@ if __name__ == "__main__":
                 ]
             )
         )
-        external_aqi = get_external_AQI()
+        external_aqi = get_external_AQI(LATITUDE, LONGITUDE, WAQI_API_KEY)
 
         path = os.path.dirname(os.path.realpath(__file__))
         progress, period, day, local_dt = sun_moon_time(city_name, time_zone)
