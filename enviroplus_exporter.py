@@ -1185,7 +1185,7 @@ if __name__ == "__main__":
         get_cpu_temperature()
         if battery_sensor:
             get_battery()
-        logging.debug("Sensor data: {}".format(collect_all_data()))
+        logging.info("Sensor data: {}".format(collect_all_data()))
 
         internal_aqi: int = int(
             aqi.to_aqi(
@@ -1203,8 +1203,8 @@ if __name__ == "__main__":
 
         # Time.
         time_elapsed = time.time() - start_time
-        date_string = local_dt.strftime("%d %b %y").lstrip("0")
-        time_string = local_dt.strftime("%I:%M:%S")
+        date_string = local_dt.strftime("%Y-%b-%d").lstrip("0")
+        time_string = local_dt.strftime("%I:%M %p")
         img = overlay_text(background, (0 + margin, 0 + margin), time_string, font_lg)
         img = overlay_text(
             img, (WIDTH - margin, 0 + margin), date_string, font_lg, align_right=True
@@ -1268,7 +1268,7 @@ if __name__ == "__main__":
         humidity_icon = Image.open(f"{path}/icons/humidity-{humidity_desc.lower()}.png")
         img.paste(humidity_icon, (margin, 48), mask=humidity_icon)
 
-        internal_aqi_str = f"{internal_aqi}/{external_aqi}"
+        internal_aqi_str = f"{internal_aqi}/{external_aqi} AQI"
         img = overlay_text(
             img, (WIDTH - margin, 18), internal_aqi_str, font_lg, align_right=True
         )
